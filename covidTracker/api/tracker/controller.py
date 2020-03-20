@@ -58,34 +58,39 @@ class Cases():
 
     def format_cases(self):
         data = self.get_cases()
+        date_now = datetime.now()
+        two_days_ago = date_now - timedelta(days=2)
+        new_date = two_days_ago.strftime('%Y-%m-%d %H:%M:%s')
         
         all_cases = []
         for record in data['brazil']:
             date_time = datetime.strptime(f"{record['date']} {record['time']}",
                                           '%d/%m/%Y %H:%M')
             cases = []
-            for value in record['values']:
-                state = self.depara_estados(value['uid'])
-                case = {
-                    "date": str(date_time),
-                    "state": state,
-                    "suspects":  value.get('suspects', 0),
-                    "refuses":  value.get('refuses', 0),
-                    "cases":  value.get('cases', 0),
-                    "deaths":  value.get('deaths', 0),
-                    "recovered":  value.get('recovered', 0)
-                }
-                cases.append(case)
+            if str(date_time) >= new_date:
+                for value in record['values']:
+                    state = self.depara_estados(value['uid'])
+                    case = {
+                        "date": str(date_time),
+                        "state": state,
+                        "suspects":  value.get('suspects', 0),
+                        "refuses":  value.get('refuses', 0),
+                        "cases":  value.get('cases', 0),
+                        "deaths":  value.get('deaths', 0),
+                        "recovered":  value.get('recovered', 0)
+                    }
+                    cases.append(case)
 
-            all_cases.append(cases)
-
+                all_cases.append(cases)
         self.save_cases(all_cases)
-        return all_cases
+        response = {
+            "request_date": date_now.strftime("%Y-%m-%d %H:%M"),
+            "msg": "Ultimas atualizações obtidas do Ministério da Saúde.",
+            "cases": all_cases
+            }
+        return response
 
     def save_cases(self, all_cases):
-        date_now = datetime.now()
-        two_days_ago = date_now - timedelta(days=2)
-        new_date = two_days_ago.strftime('%Y-%m-%d %H:%M:%s')
         try:
             if all_cases is None:
                 return {"status": False, "msg": "não obtivemos atualizações."}
@@ -94,11 +99,10 @@ class Cases():
                 metadata.create_all(engine)
                 for cases in all_cases:
                     for case in cases:
-                        if case['date'] >= new_date:
-                            with CadastroDBContext(engine) as db:
-                                cas = CasesCovid(**case)
-                                db.session.add(cas)
-                                db.session.commit()
+                        with CadastroDBContext(engine) as db:
+                            cas = CasesCovid(**case)
+                            db.session.add(cas)
+                            db.session.commit()
                 return {"status": True, "msg": "Casos cadastrados com sucesso."}
         except Exception as e:
             return {"status": False, "msg": e}
