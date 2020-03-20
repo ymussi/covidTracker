@@ -1,9 +1,9 @@
 from covidTracker.api.config import Config, CadastroDBContext
 from covidTracker.api.database import engine
 from covidTracker.api.database.orm_cases_covid import CasesCovid
+from covidTracker.api.database.orm_create_db import drop_table, create_table
 from datetime import datetime
 
-import pandas as pd
 import requests, json
 
 class Cases():
@@ -84,13 +84,18 @@ class Cases():
 
     def save_cases(self, all_cases):
         try:
-            for cases in all_cases:
-                for case in cases:
-                    with CadastroDBContext(engine) as db:
-                        cas = CasesCovid(**case)
-                        db.session.add(cas)
-                        db.session.commit()
-            return {"status": True, "msg": "Casos cadastrados com sucesso."}
+            if all_cases is None:
+                return {"status": False, "msg": "não obtivemos atualizações."}
+            else:
+                drop_table
+                create_table
+                for cases in all_cases:
+                    for case in cases:
+                        with CadastroDBContext(engine) as db:
+                            cas = CasesCovid(**case)
+                            db.session.add(cas)
+                            db.session.commit()
+                return {"status": True, "msg": "Casos cadastrados com sucesso."}
         except Exception as e:
             return {"status": False, "msg": e}
 
