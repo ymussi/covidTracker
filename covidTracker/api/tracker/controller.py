@@ -2,7 +2,7 @@ from covidTracker.api.config import Config, CadastroDBContext
 from covidTracker.api.database import engine
 from covidTracker.api.database.orm_cases_covid import CasesCovid
 from covidTracker.api.database.orm_create_db import metadata
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests, json
 
@@ -83,6 +83,9 @@ class Cases():
         return all_cases
 
     def save_cases(self, all_cases):
+        date_now = datetime.now()
+        two_days_ago = date_now - timedelta(days=2)
+        new_date = two_days_ago.strftime('%Y-%m-%d %H:%M:%s')
         try:
             if all_cases is None:
                 return {"status": False, "msg": "não obtivemos atualizações."}
@@ -91,10 +94,11 @@ class Cases():
                 metadata.create_all(engine)
                 for cases in all_cases:
                     for case in cases:
-                        with CadastroDBContext(engine) as db:
-                            cas = CasesCovid(**case)
-                            db.session.add(cas)
-                            db.session.commit()
+                        if case['date'] >= new_date:
+                            with CadastroDBContext(engine) as db:
+                                cas = CasesCovid(**case)
+                                db.session.add(cas)
+                                db.session.commit()
                 return {"status": True, "msg": "Casos cadastrados com sucesso."}
         except Exception as e:
             return {"status": False, "msg": e}
