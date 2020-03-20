@@ -5,7 +5,6 @@ from covidTracker.api.database.orm_create_db import metadata
 from sqlalchemy.sql import func 
 from datetime import datetime, timedelta
 
-import pandas as pd
 import requests, json
 
 class Cases():
@@ -133,7 +132,7 @@ class Cases():
 
             return {"status": True, "msg": "Casos cadastrados com sucesso."}
         except Exception as e:
-            return {"status": False, "msg": e}
+            return {"status": False, "msg": str(e)}
 
     def save_cases(self, all_cases):
         try:
@@ -150,7 +149,7 @@ class Cases():
                             db.session.commit()
                 return {"status": True, "msg": "Casos cadastrados com sucesso."}
         except Exception as e:
-            return {"status": False, "msg": e}
+            return {"status": False, "msg": str(e)}
 
 
 
