@@ -13,3 +13,15 @@ class CasesCovid(Base, Register):
     cases = Column(String(30))
     deaths = Column(String(15))
     recovered = Column(String(30))
+
+class AllCasesCovid(Base, Register):
+
+    __tablename__ = "all_cases"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    update_at = Column(DateTime)
+    suspects = Column(String(100))
+    refuses = Column(String(100))
+    cases = Column(String(100))
+    deaths = Column(String(100))
+    recovered = Column(String(100))

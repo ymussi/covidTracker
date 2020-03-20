@@ -1,9 +1,11 @@
 from covidTracker.api.config import Config, CadastroDBContext
 from covidTracker.api.database import engine
-from covidTracker.api.database.orm_cases_covid import CasesCovid
+from covidTracker.api.database.orm_cases_covid import CasesCovid, AllCasesCovid
 from covidTracker.api.database.orm_create_db import metadata
+from sqlalchemy.sql import func 
 from datetime import datetime, timedelta
 
+import pandas as pd
 import requests, json
 
 class Cases():
@@ -12,12 +14,19 @@ class Cases():
         self.URL_MS = Config.get('URD_MS', 'url')
 
     def get_cases(self):
-        request = requests.get(self.URL_MS)
+        try:
+            request = requests.get(self.URL_MS)
 
-        content = request.content.decode('utf8').replace('var database=', '')
-        data = json.loads(content)
+            content = request.content.decode('utf8').replace('var database=', '')
+            data = json.loads(content)
 
-        return data
+            return {"status": True, "data": data}
+        except Exception as e:
+            return {
+                "status": False,
+                "msg": "Base de dados do MS não disponível.",
+                "err": str(e)
+                }
 
     def depara_estados(self, uid):
         try:
@@ -58,12 +67,16 @@ class Cases():
 
     def format_cases(self):
         data = self.get_cases()
+
+        if data['status'] is False:
+            return data
+        
         date_now = datetime.now()
         two_days_ago = date_now - timedelta(days=2)
         new_date = two_days_ago.strftime('%Y-%m-%d %H:%M:%s')
         
         all_cases = []
-        for record in data['brazil']:
+        for record in data['data']['brazil']:
             date_time = datetime.strptime(f"{record['date']} {record['time']}",
                                           '%d/%m/%Y %H:%M')
             cases = []
@@ -83,12 +96,44 @@ class Cases():
 
                 all_cases.append(cases)
         self.save_cases(all_cases)
+        self.save_all_cases()
         response = {
             "request_date": date_now.strftime("%Y-%m-%d %H:%M"),
             "msg": "Ultimas atualizações obtidas do Ministério da Saúde.",
             "cases": all_cases
             }
         return response
+
+    def save_all_cases(self):
+        try:
+            with CadastroDBContext(engine) as db:
+                obj = db.session.query(
+                    (CasesCovid.date),
+                    func.sum(CasesCovid.suspects),
+                    func.sum(CasesCovid.refuses),
+                    func.sum(CasesCovid.cases),
+                    func.sum(CasesCovid.deaths),
+                    func.sum(CasesCovid.recovered)).all()
+                db.session.close()
+
+            all_cases = {
+                "created_at": datetime.strftime(obj[0][0], "%Y-%m-%d %H:%M"),
+                "updated_at": datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M"),
+                "suspects": obj[0][1],
+                "refuses": obj[0][2],
+                "cases": obj[0][3],
+                "deaths": obj[0][4],
+                "recoveres": obj[0][5],
+            }
+            
+            with CadastroDBContext(engine) as db:
+                cases = AllCasesCovid(**all_cases)
+                db.session.add(cases)
+                db.session.commit()
+
+            return {"status": True, "msg": "Casos cadastrados com sucesso."}
+        except Exception as e:
+            return {"status": False, "msg": e}
 
     def save_cases(self, all_cases):
         try:
@@ -107,8 +152,11 @@ class Cases():
         except Exception as e:
             return {"status": False, "msg": e}
 
+
+
 if __name__ == "__main__":
     r = Cases()
-    # res = r.format_cases()
-    res = r.save_cases()
+    res = r.format_cases()
+    # res = r.save_cases()
+    # res = r.get_cases()
     print(res)
