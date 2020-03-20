@@ -19,7 +19,8 @@ class AllCasesCovid(Base, Register):
     __tablename__ = "all_cases"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    update_at = Column(DateTime)
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
     suspects = Column(String(100))
     refuses = Column(String(100))
     cases = Column(String(100))

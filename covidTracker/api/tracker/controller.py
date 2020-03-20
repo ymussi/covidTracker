@@ -122,7 +122,7 @@ class Cases():
                 "refuses": obj[0][2],
                 "cases": obj[0][3],
                 "deaths": obj[0][4],
-                "recoveres": obj[0][5],
+                "recovered": obj[0][5],
             }
             
             with CadastroDBContext(engine) as db:
@@ -155,7 +155,8 @@ class Cases():
 
 if __name__ == "__main__":
     r = Cases()
-    res = r.format_cases()
+    # res = r.format_cases()
     # res = r.save_cases()
     # res = r.get_cases()
+    res = r.save_all_cases()
     print(res)
