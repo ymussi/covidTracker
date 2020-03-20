@@ -1,7 +1,7 @@
 from covidTracker.api.config import Config, CadastroDBContext
 from covidTracker.api.database import engine
 from covidTracker.api.database.orm_cases_covid import CasesCovid
-from covidTracker.api.database.orm_create_db import drop_table, create_table
+from covidTracker.api.database.orm_create_db import metadata
 from datetime import datetime
 
 import requests, json
@@ -87,8 +87,8 @@ class Cases():
             if all_cases is None:
                 return {"status": False, "msg": "não obtivemos atualizações."}
             else:
-                drop_table
-                create_table
+                metadata.drop_all(engine)
+                metadata.create_all(engine)
                 for cases in all_cases:
                     for case in cases:
                         with CadastroDBContext(engine) as db:

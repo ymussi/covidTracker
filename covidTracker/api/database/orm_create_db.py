@@ -14,5 +14,5 @@ Column('deaths',String(15)),
 Column('recovered',String(30)),
 )
 
-drop_table = metadata.drop_all(engine)
-create_table = metadata.create_all(engine)
+# drop_table = metadata.drop_all(engine)
+# create_table = metadata.create_all(engine)
