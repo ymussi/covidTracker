@@ -1,6 +1,6 @@
 sqlalchemy
 flask-restplus
-flask==1.0.2
+flask==2.3.2
 configparser==3.5.0
 werkzeug==0.16.1
 flask_cors
